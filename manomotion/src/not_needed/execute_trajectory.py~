@@ -1,0 +1,120 @@
+#!/usr/bin/env python
+
+import sys
+import copy
+import rospy
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint, MultiDOFJointTrajectory
+from std_msgs.msg import Header
+from moveit_msgs.msg import RobotTrajectory
+
+
+print "============ Starting tutorial setup"
+moveit_commander.roscpp_initialize(sys.argv)
+
+robot = moveit_commander.RobotCommander()
+print robot.get_group_names()
+print("current_state", robot.get_current_state())
+#scene = moveit_commander.PlanningSceneInterface()
+
+#Instantiate a MoveGroupCommander object. This object is an interface to one group of joints. In this case the group is the joints in the left arm. This interface can be used to plan and execute motions on the left arm.
+group = moveit_commander.MoveGroupCommander("right_arm")
+
+# making a scene around the robot 
+#scene = moveit_commander.PlanningSceneInterface()
+
+#display tajectory publisher 
+#display_trajectory_publisher = rospy.Publisher(
+#                                    '/move_group/display_planned_path',
+#                                    moveit_msgs.msg.DisplayTrajectory,
+#                                    queue_size=20)
+
+print "============ Waiting for RVIZ..."
+#rospy.sleep(5)
+print "============ Starting tutorial "
+#print "============ End effector: %s" % group.get_end_effector_link()
+print "============ Robot Groups:"
+
+#print robot.get_group_names()
+
+
+
+rospy.init_node('generate_trajectory_plan',
+                anonymous=True)
+#self = trajectory_msgs.msg
+#self.header.seq =  #set by the publisher for you 
+#self.header.stamp = rospy.Time.now() 	# Note you need to call rospy.init_node() before this will work
+
+#############Creating a Robot Trajectory Message#################
+
+trajectory = RobotTrajectory()
+trajectory.multi_dof_joint_trajectory = MultiDOFJointTrajectory()
+trajectory.joint_trajectory = JointTrajectory()
+
+trajectory.joint_trajectory.header = Header()	
+trajectory.joint_trajectory.header.frame_id = "/world" #the trajectory is relative to this link or /ra_base_link 
+trajectory.joint_trajectory.header.stamp = rospy.Time.now()
+
+#Joint names for the Shadow Hand
+#trajectory.joint_names = "[rh_FFJ1, rh_FFJ2, rh_FFJ3, rh_FFJ4, rh_MFJ1, rh_MFJ2, rh_MFJ3, rh_MFJ4, rh_RFJ1, rh_RFJ2, rh_RFJ3, rh_RFJ4, rh_LFJ1, rh_LFJ2, rh_LFJ3, rh_LFJ4, rh_LFJ5, rh_THJ1, rh_THJ2, rh_THJ3, rh_THJ4, rh_THJ5]" 
+
+#Joint names for the UR Arm
+trajectory.joint_trajectory.joint_names = ["ra_shoulder_pan_joint", "ra_shoulder_lift_joint", "ra_elbow_joint", "ra_wrist_1_joint", "ra_wrist_2_joint", "ra_wrist_3_joint"]	#for the arm "rh_WRJ1", "rh_WRJ2"
+
+trajectory.joint_trajectory.points = JointTrajectoryPoint() 
+trajectory.joint_trajectory.points.positions = [-0.06287542193996262, 0.10478374187117233, -0.05273516132184101, -0.06853086622339588, -0.0474672065107182, -0.05524951988253839]
+
+trajectory.joint_trajectory.points.velocities = [-0.36265625156852693, 0.5446322961370234, -0.29998359750728154, -0.3887674774117624, -0.2664335465635783, -0.31118250995515406]
+trajectory.joint_trajectory.points.accelerations = [-1.4163764568279897, 2.1270951721919684, -1.1716045238602226, -1.5183554669327937, -1.0405727214949967, -1.2153425701909844]
+
+trajectory.joint_trajectory.points.effort = []
+trajectory.joint_trajectory.points.time_from_start = [0.304612813]
+
+
+while True:
+	pose_target = geometry_msgs.msg.Pose()
+	pose_target.orientation.w = 1.0
+	pose_target.orientation.x = 0.0
+	pose_target.orientation.y = 1.0
+	pose_target.orientation.z = 0.0
+	pose_target.position.x = 0.2
+	pose_target.position.y = -0.3
+	pose_target.position.z = 0.5
+	group.set_pose_target(pose_target)
+	plan1 = group.plan()
+	group.execute(plan1)
+
+
+
+
+
+	pose_target = geometry_msgs.msg.Pose()
+	pose_target.orientation.w = 1.0
+	pose_target.orientation.x = 0.0
+	pose_target.orientation.y = 1.0
+	pose_target.orientation.z = 0.0
+	pose_target.position.x = 0.0
+	pose_target.position.y = -0.3
+	pose_target.position.z = 0.5
+	group.set_pose_target(pose_target)
+	group.set_pose_target(pose_target)
+	plan2 = group.plan()
+	group.execute(plan2)	
+
+
+	
+
+print("plan1", plan1)
+
+print ("trajectory", trajectory)
+
+group.execute(plan1)
+
+
+
+
+
+
+

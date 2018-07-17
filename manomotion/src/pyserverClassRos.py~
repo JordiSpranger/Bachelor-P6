@@ -12,6 +12,8 @@ IP_ADDR=''				# Use '' for automatically select the local machine's IP
 PORT=8080				# Select a port for communication
 MSGLEN= 2				# expected incoming message length
 
+dummy1 = 0
+dummy2 = 1
 
 class serverSocket:
 	""" Server Socket class: Defines the server socket for communication between clients and also provides methods for reading and writing using socket""" 
@@ -71,7 +73,9 @@ class serverSocket:
 		if  start > -1:
 			if end > start:
 				data = data[start+1 : end]
-				print "Data", data 
+				#print "Data", data 
+				data = data.split('_')
+				
 				return data			
 		else:
 			pass
@@ -83,16 +87,57 @@ class serverSocket:
 # license removed for brevity
 
  
-def talker():
-     pub = rospy.Publisher('chatter', String, queue_size=10)
-     rospy.init_node('talker', anonymous=True)
-     #rate = rospy.Rate(10) # 10hz
-     while not rospy.is_shutdown():
-	 ran=soc.sockRead() # Read message of MSGLEN from the client
-         hello_str = ran 
-         rospy.loginfo(hello_str)
-         pub.publish(hello_str)
-         #rate.sleep()
+def talker(dummy1, dummy2):
+     	pub = rospy.Publisher('chatter', String, queue_size=10)
+     	rospy.init_node('talker', anonymous=True)
+     	#rate = rospy.Rate(10) # 10hz
+     	while not rospy.is_shutdown():
+	 	ran = soc.sockRead() # Read message of MSGLEN from the client
+         	hello_str = ran
+		#print("type ran",type(hello_str))
+		
+		if str(type(hello_str)) == "<type 'list'>": 
+			#if len(hello_str) > 2:
+				data = ran 
+				#print("data",data)
+				if dummy2 == 1:
+					frame = int(data[0])
+					hand_avg = [int(data[1]), int(data[1]), int(data[1]), int(data[1]), int(data[1])]
+					x_avg = [float(data[2]), float(data[2]), float(data[2]), float(data[2]), float(data[2])]
+					y_avg = [float(data[3]), float(data[3]), float(data[3]), float(data[3]), float(data[3])]
+					z_avg = [float(data[4]), float(data[4]), float(data[4]), float(data[4]), float(data[4])]
+					dummy2 = 0
+						
+
+				#print("dummy1",dummy1)
+				frame = int(data[0])
+				hand_avg[dummy1] = int(data[1])
+				x_avg[dummy1] = float(data[2])
+				y_avg[dummy1] = float(data[3])
+				z_avg[dummy1] = float(data[4])
+				
+				hand = int(sum(hand_avg)/5)
+				x = float(sum(x_avg)/5)
+				y = float(sum(y_avg)/5)
+				z = float(sum(z_avg)/5)
+				
+
+				frame = str(frame)
+				hand = str(hand)
+				x = str(x)
+				y = str(y)
+				z = str(z)
+				info = frame+"_"+hand+"_"+x+"_"+y+"_"+z
+
+
+				#print("info",info)
+				dummy1 = dummy1 + 1
+				if dummy1 == 5:
+					dummy1 = 0 	 
+
+				rospy.loginfo(hello_str)
+				pub.publish(info)
+        			#rate.sleep()
 	 
 
 
@@ -106,7 +151,7 @@ if __name__=="__main__":
 		soc.serverBind(IP_ADDR,PORT)		# Binding the socket obeject to the host IP and port
 		clSock,addr=soc.serverAcceptConnections() # Accept incoming connection 	from client
 			
-		talker()						
+		talker(dummy1, dummy2)						
 		#soc.sockWrite("Hi")			# Sample write message
 	except(KeyboardInterrupt) or rospy.ROSInterruptException:
 		print "Keyboard Interrupt. Closing socket connection..."

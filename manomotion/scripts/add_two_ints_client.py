@@ -2,8 +2,7 @@
 
 import sys
 import rospy
-import AddTwoInts
-import BadTwoInts
+from beginner_tutorials.srv import *
 
 def add_two_ints_client(x, y):
     rospy.wait_for_service('add_two_ints')
